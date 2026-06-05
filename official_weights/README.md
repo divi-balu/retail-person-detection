@@ -27,7 +27,7 @@ This parses the Darknet binary format:
 
 **Image:**
 ```bash
-python detect_official.py --source mall.jpg --weights yolov3_coco.pth --output output.jpg
+python detect_official.py --source store.jpg --weights yolov3_coco.pth --output output.jpg
 ```
 
 **Video:**
@@ -56,3 +56,11 @@ Unlike Ultralytics (which wraps everything), this approach:
               ConvBNLeaky: bn_bias, bn_weight, bn_mean, bn_var, conv_weight
               Conv+bias:   bias, conv_weight
 ```
+
+
+## Note on Official Weights
+The Darknet weight converter loads the backbone successfully.
+Full detection head alignment is a known challenge due to
+route layer ordering differences between Darknet cfg and
+pure PyTorch implementations. Working detection is demonstrated
+via the Ultralytics pipeline which uses the same YOLOv3 architecture.
