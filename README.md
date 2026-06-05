@@ -139,9 +139,3 @@ Where cx, cy = grid offsets; pw, ph = anchor dimensions.
 3. He et al. (2016). *Deep Residual Learning for Image Recognition.*
 
 ---
-
-## Author
-
-**Divya Balasubramanian**  
-PhD Candidate, IIT Madras | ML Engineer  
-[divi.b21@gmail.com](mailto:divi.b21@gmail.com)
