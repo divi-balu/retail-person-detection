@@ -12,7 +12,7 @@ pip install -r requirements.txt
 
 **Image:**
 ```bash
-python detect_ultralytics.py --source mall.jpg --output output.jpg
+python detect_ultralytics.py --source store.jpg --output output.jpg
 ```
 
 **Video:**
