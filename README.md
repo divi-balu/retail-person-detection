@@ -20,13 +20,11 @@ retail-person-detection/
 │
 ├── ultralytics_detect/             # ── Method 1: Ultralytics pretrained weights
 │   ├── detect_ultralytics.py       #    Easiest — weights auto-download
-│   ├── requirements.txt
 │   └── README.md
 │
 ├── official_weights/               # ── Method 2: Official Darknet weights
 │   ├── convert_weights.py          #    Parses Darknet binary format → PyTorch
 │   ├── detect_official.py          #    Detection with converted weights
-│   ├── requirements.txt
 │   └── README.md
 │
 └── demo/
