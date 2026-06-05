@@ -4,7 +4,7 @@ Based on: "YOLOv3: An Incremental Improvement" - Redmon & Farhadi (2018)
 https://arxiv.org/abs/1804.02767
 
 Applied to: Retail person detection use case
-Author: Divya Balasubramanian
+Author: divi-balu
 """
 
 import torch
