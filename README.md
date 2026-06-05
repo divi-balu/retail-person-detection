@@ -1,14 +1,37 @@
 # Retail Person Detection — YOLOv3 (PyTorch)
 
-Implementation of **YOLOv3** from the original paper, applied to retail person detection.
+Implementation of **YOLOv3** from the original paper applied to retail person detection.  
+Two complete detection pipelines included.
 
 > Redmon & Farhadi, *"YOLOv3: An Incremental Improvement"*, arXiv 2018  
 > https://arxiv.org/abs/1804.02767
 
-## Use Case
+---
 
-Retail video analytics — detecting and counting customers in store environments.  
-Directly applicable to: footfall tracking, queue detection, heatmap generation.
+## Repository Structure
+
+```
+retail-person-detection/
+│
+├── model.py                        # YOLOv3 + Darknet-53 — implemented from paper
+├── utils.py                        # IoU, NMS, bbox decoding, draw boxes
+├── train.py                        # Fine-tune on COCO person class
+├── requirements.txt                # Base dependencies
+│
+├── ultralytics_detect/             # ── Method 1: Ultralytics pretrained weights
+│   ├── detect_ultralytics.py       #    Easiest — weights auto-download
+│   ├── requirements.txt
+│   └── README.md
+│
+├── official_weights/               # ── Method 2: Official Darknet weights
+│   ├── convert_weights.py          #    Parses Darknet binary format → PyTorch
+│   ├── detect_official.py          #    Detection with converted weights
+│   ├── requirements.txt
+│   └── README.md
+│
+└── demo/
+    └── output.jpg                  # Sample detection result
+```
 
 ---
 
@@ -17,125 +40,86 @@ Directly applicable to: footfall tracking, queue detection, heatmap generation.
 ```
 Input (416×416)
       │
-  Darknet-53 Backbone  (53 conv layers + residual blocks)
+  Darknet-53 Backbone
+  (53 layers + residual blocks — Table 1, paper)
       │
-  ┌───┴───────────────┐
-  │                   │
-Scale 1 (13×13)   Scale 2 (26×26)   Scale 3 (52×52)
-Small people      Medium people     Large/close people
-      │
-  Multi-scale Detection Heads → Decode → NMS → Output
+  ┌───┴──────────────────────┐
+  │           │              │
+Scale1      Scale2        Scale3
+13×13       26×26         52×52
+small       medium        large/close
+people      people        people
+  │           │              │
+  └───────────┴──────────────┘
+              │
+     Decode → NMS → Output
 ```
 
-**Key design choices from the paper:**
-- Darknet-53: deeper than Darknet-19 (YOLOv2), uses residual connections
-- 3 detection scales: handles people at varying distances in retail scenes
-- 9 anchors total (k-means clustered on COCO person bboxes)
-- Logistic regression for objectness (not softmax) → better multi-label support
-
----
-
-## Project Structure
-
-```
-retail-person-detection/
-├── model.py          # YOLOv3 + Darknet-53 architecture (PyTorch)
-├── utils.py          # IoU, NMS, bbox decoding, preprocessing
-├── detect.py         # Inference on image / video / webcam
-├── train.py          # Fine-tuning on COCO person class
-├── requirements.txt
-├── demo/
-│   └── output.jpg    # Sample detection result
-└── README.md
-```
+**Key paper concepts implemented:**
+- Darknet-53 backbone with residual connections (Section 2.2)
+- Multi-scale detection across 3 feature map sizes (Section 2.3)
+- 9 anchors total — 3 per scale (k-means on COCO)
+- Logistic objectness per anchor (Section 2.1)
+- Bbox decoding: `bx = σ(tx) + cx`, `bw = pw·exp(tw)`
 
 ---
 
 ## Quick Start
 
-### 1. Install dependencies
+### Method 1 — Ultralytics (Easiest, real detections immediately)
 ```bash
-git clone https://github.com/YOUR_USERNAME/retail-person-detection
-cd retail-person-detection
+cd ultralytics_detect
 pip install -r requirements.txt
+python detect_ultralytics.py --source mall.jpg --output output.jpg
 ```
+Weights auto-download (~230MB) on first run.
 
-### 2. Run on an image (demo mode — random weights)
+### Method 2 — Official Darknet Weights (Manual conversion)
 ```bash
-python detect.py --source demo/store.jpg --output demo/output.jpg
-```
+cd official_weights
+pip install -r requirements.txt
 
-### 3. Run on webcam
-```bash
-python detect.py --source 0
-```
-
-### 4. Run with pretrained weights
-Download YOLOv3 COCO weights (person class):
-```bash
+# Download official weights
 wget https://pjreddie.com/media/files/yolov3.weights
-# Convert to PyTorch: use darknet2pytorch (see below)
-python detect.py --source demo/store.jpg --weights yolov3_person.pth
+
+# Convert Darknet → PyTorch
+python convert_weights.py --weights yolov3.weights --output yolov3_coco.pth
+
+# Run detection
+python detect_official.py --source mall.jpg --weights yolov3_coco.pth
 ```
-
-### 5. Fine-tune on COCO
-```bash
-# Download COCO 2017: https://cocodataset.org/#download
-python train.py --data_dir ./coco --epochs 30 --batch_size 8
-```
-
----
-
-## Implementation Details
-
-### IoU Calculation
-Standard bounding box IoU used for NMS and anchor matching:
-```
-IoU = Intersection / Union
-    = (overlap area) / (area1 + area2 - overlap)
-```
-
-### Non-Maximum Suppression (NMS)
-- Sort boxes by confidence score (descending)
-- Greedily keep highest-confidence box
-- Suppress any box with IoU > 0.45 with a kept box
-- Threshold: confidence > 0.5
-
-### Bbox Decoding (Section 2.1, paper)
-```
-bx = sigmoid(tx) + cx    # centre x
-by = sigmoid(ty) + cy    # centre y
-bw = pw * exp(tw)        # width
-bh = ph * exp(th)        # height
-```
-Where cx, cy = grid offsets; pw, ph = anchor dimensions.
-
----
-
-## Results (Demo)
-
-| Metric | Value |
-|--------|-------|
-| Input resolution | 416 × 416 |
-| Inference speed (CPU) | ~2–3 FPS |
-| Inference speed (GPU) | ~30+ FPS |
-| Person class AP (COCO) | ~51% (paper baseline) |
 
 ---
 
 ## Retail Applications
 
-- **Footfall counting** — track customer entries/exits
-- **Queue detection** — alert when person count exceeds threshold
-- **Zone analytics** — detect dwell time in specific shelf zones
-- **Heatmap generation** — aggregate bounding box centres over time
+| Application | How YOLOv3 Helps |
+|---|---|
+| Footfall counting | Count person detections per frame |
+| Queue detection | Alert when count > threshold in zone |
+| Heatmap generation | Aggregate bbox centres over time |
+| Dwell time analysis | Track person presence duration per zone |
+
+---
+
+## Results
+
+| Metric | Value |
+|---|---|
+| Input size | 416 × 416 |
+| CPU inference | ~2–3 FPS |
+| GPU inference | ~30+ FPS |
+| COCO person AP | ~51% (paper) |
 
 ---
 
 ## References
 
-1. Redmon & Farhadi (2018). *YOLOv3: An Incremental Improvement.* arXiv:1804.02767
-2. Lin et al. (2014). *Microsoft COCO: Common Objects in Context.*
+1. Redmon & Farhadi (2018). *YOLOv3: An Incremental Improvement.* arXiv:1804.02767  
+2. Lin et al. (2014). *Microsoft COCO: Common Objects in Context.*  
 3. He et al. (2016). *Deep Residual Learning for Image Recognition.*
 
 ---
+
+## Author
+divi_balu
