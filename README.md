@@ -120,4 +120,4 @@ python detect_official.py --source mall.jpg --weights yolov3_coco.pth
 ---
 
 ## Author
-divi_balu
+divi-balu
